@@ -1,0 +1,9 @@
+{
+  "name": "G2 Réussite",
+  "short_name": "G2 Réussite",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f8f5",
+  "theme_color": "#087653",
+  "icons": []
+}

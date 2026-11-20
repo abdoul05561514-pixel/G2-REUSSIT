@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b7658">
+  <title>G2 Réussite</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <style>
+    :root{font-family:system-ui,Arial,sans-serif;color:#17221d;background:#f4f8f5}
+    *{box-sizing:border-box}body{margin:0}header{background:#087653;color:white;padding:22px 18px}
+    h1{margin:0 0 6px;font-size:27px}header p{margin:0;opacity:.92}
+    main{max-width:850px;margin:auto;padding:16px}
+    .card{background:white;border:1px solid #dce8df;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #173b2410}
+    h2{font-size:20px;margin:0 0 12px}.subjects{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px}
+    button,.filelabel{border:0;border-radius:10px;padding:12px 14px;background:#087653;color:white;font-weight:650;font-size:15px;cursor:pointer}
+    button.secondary{background:#e7f2eb;color:#07583f;border:1px solid #c9dfd0}
+    .subject{width:100%;min-height:54px}.muted{color:#64736a;font-size:14px}
+    textarea,input{width:100%;border:1px solid #bdcec2;border-radius:10px;padding:12px;font:inherit;margin:7px 0}
+    textarea{min-height:110px;resize:vertical}.answer{white-space:pre-wrap;line-height:1.55}
+    #lesson{line-height:1.6}.hidden{display:none}#file{margin:8px 0}
+    footer{text-align:center;color:#6d7b72;padding:20px;font-size:13px}
+  </style>
+</head>
+<body>
+<header><h1>G2 Réussite</h1><p>Apprendre, comprendre et progresser en Seconde G2</p></header>
+<main>
+  <section class="card">
+    <h2>Mes matières</h2>
+    <p class="muted">Choisis une matière pour afficher sa fiche de départ. Les cours complets devront être ajoutés progressivement.</p>
+    <div class="subjects" id="subjects"></div>
+  </section>
+  <section class="card">
+    <h2 id="lessonTitle">Bienvenue</h2>
+    <div id="lesson">Sélectionne une matière ci-dessus pour commencer.</div>
+  </section>
+  <section class="card">
+    <h2>Assistant d'étude IA</h2>
+    <p class="muted">L'assistant nécessite Internet et une configuration OpenAI par le responsable du projet. N'ajoute aucune information personnelle dans tes documents.</p>
+    <label for="access">Code d'accès fourni par le responsable</label>
+    <input id="access" type="password" autocomplete="off" placeholder="Code d'accès">
+    <label for="question">Ta question</label>
+    <textarea id="question" placeholder="Exemple : Explique-moi la différence entre débit et crédit."></textarea>
+    <label for="file">Joindre une photo ou un PDF (facultatif)</label>
+    <input id="file" type="file" accept="image/*,.pdf">
+    <button id="ask">Poser ma question</button>
+    <p class="muted" id="status" aria-live="polite"></p>
+    <div id="answer" class="answer"></div>
+  </section>
+</main>
+<footer>G2 Réussite — Les fiches enregistrées peuvent être consultées hors connexion après le premier chargement. L'assistant IA exige Internet.</footer>
+<script>
+const lessons = {
+"Comptabilité":"Fiche de départ — La comptabilité générale sert à enregistrer et classer les opérations d'une entreprise. Elle s'appuie notamment sur le principe de la partie double : chaque opération touche au moins deux comptes, avec égalité entre le total des débits et celui des crédits. Cette fiche est introductive et ne remplace pas un cours complet.",
+"TAC":"Fiche de départ — TAC : matière à compléter avec le programme et les leçons étudiées en classe. Ajoute ici les définitions, méthodes, exemples et exercices de ton professeur.",
+"OC":"Fiche de départ — Organisation et communication : étudier le fonctionnement d'une organisation, les rôles, les échanges d'informations et les documents professionnels.",
+"Français":"Fiche de départ — Lire attentivement un texte, repérer son thème, son idée principale et les arguments. Pour rédiger, organiser les idées en paragraphes et relire la grammaire et l'orthographe.",
+"Mathématiques":"Fiche de départ — Revoir les calculs numériques, les fractions, les pourcentages, les équations et la lecture de graphiques selon le chapitre étudié.",
+"EXPRO":"Fiche de départ — EXPRO : fiche à compléter selon l'intitulé exact et le programme de ton établissement.",
+"Espagnol":"Fiche de départ — Apprendre le vocabulaire courant, les salutations, les pronoms personnels et la conjugaison des verbes réguliers au présent.",
+"Économie":"Fiche de départ — L'économie étudie la production, la répartition et la consommation des biens et services ainsi que les choix des agents économiques.",
+"Droit":"Fiche de départ — Le droit regroupe les règles qui organisent la vie en société. Une règle de droit est générale, obligatoire et sanctionnée par l'autorité publique.",
+"CMC":"Fiche de départ — CMC : fiche à compléter avec le programme exact de ta classe et les notions vues en cours."
+};
+const grid=document.getElementById('subjects');
+Object.entries(lessons).forEach(([name,body])=>{
+ const b=document.createElement('button'); b.className='subject secondary'; b.textContent=name;
+ b.onclick=()=>{document.getElementById('lessonTitle').textContent=name;document.getElementById('lesson').textContent=body;};
+ grid.appendChild(b);
+});
+document.getElementById('ask').addEventListener('click', async()=>{
+ const status=document.getElementById('status'), answer=document.getElementById('answer');
+ const question=document.getElementById('question').value.trim(), code=document.getElementById('access').value.trim();
+ const file=document.getElementById('file').files[0];
+ if(!question && !file){status.textContent='Écris une question ou joins un fichier.';return;}
+ status.textContent='Envoi en cours…'; answer.textContent='';
+ try{
+  const payload={question,accessCode:code};
+  if(file){
+   if(file.size>8*1024*1024) throw new Error('Fichier trop volumineux : limite de 8 Mo.');
+   if(!file.type.startsWith('image/') && file.type!=='application/pdf') throw new Error('Choisis une image ou un PDF.');
+   payload.file={name:file.name,type:file.type,data:await new Promise((resolve,reject)=>{
+    const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Lecture du fichier impossible.'));r.readAsDataURL(file);
+   })};
+  }
+  const res=await fetch('/.netlify/functions/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await res.json();
+  if(!res.ok) throw new Error(data.error||'Erreur de connexion.');
+  answer.textContent=data.answer||'Aucune réponse reçue.';
+  status.textContent='Réponse reçue.';
+ }catch(e){status.textContent=e.message||'Une erreur est survenue.';}
+});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
+</script>
+</body></html>
